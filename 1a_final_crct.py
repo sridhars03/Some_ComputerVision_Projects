@@ -15,9 +15,9 @@ else:
 
 
 #neglect borders (preprocess)
-b = b[45:-45, 45:-45]
-g = g[45:-45, 45:-45]
-r = r[45:-45, 45:-45]
+b = b[30:-30, 30:-30]
+g = g[30:-30, 30:-30]
+r = r[30:-30, 30:-30]
 ########################################################
 
 '''
@@ -29,10 +29,11 @@ r = r[45:-45, 45:-45]
 #########################################
 '''
 
-disp=np.arange(-15,16)
+disp=np.arange(-45,45)
 best_disp_r,best_disp_g=(),()
-gNCC_score_prev=float("-inf")
-rNCC_score_prev=float("-inf")
+gNCC_score_prev,gSSD_score_prev=float("-inf"),float("inf")
+rNCC_score_prev,rSSD_score_prev=float("-inf"),float("inf")
+
 zero_count=0
 #####GREEN SHIFT######
 for dx in disp:
@@ -41,25 +42,8 @@ for dx in disp:
         #displacement
         translation_matrix=np.float32([[1,0,dx],[0,1,dy]])
         green_shifted = cv2.warpAffine(g, translation_matrix, (g.shape[1], g.shape[0]))
+        
         #####ROI selection########
-        # if dx>0:
-        #     gcopy = green_shifted[:, dx:]
-        #     b_g = b[:, dx:]
-        # elif dx<0:
-        #     gcopy=green_shifted[:,:dx]
-        #     b_g = b[:, :dx]
-        # else:   
-        #     pass    #no movement along height
-
-        # if dy>0:
-        #     gcopy = gcopy[dy:, :]
-        #     b_g = b_g[dy:, :]
-        # elif dy<0:
-        #     gcopy=gcopy[:dy, :]
-        #     b_g = b_g[:dy, :]
-        # else:   
-        #     pass    #no movement along width
-
         if dx > 0 and dy > 0:
             gcopy = green_shifted[dy:, dx:]
             b_g = b[dy:, dx:]
@@ -76,11 +60,13 @@ for dx in disp:
             gcopy = green_shifted
             b_g = b
         
-        ##############NCC Scoring############
+        #############NCC Scoring############
         gflat = gcopy.flatten().astype(np.float32)
         bflat = b_g.flatten().astype(np.float32)
-        gNCC_numerator = np.sum((gflat - np.mean(gflat)) * (bflat - np.mean(bflat)))
-        gNCC_denominator = np.sqrt(np.sum((gflat - np.mean(gflat))**2) * np.sum((bflat - np.mean(bflat))**2))
+        gflat_mean_centered = gflat - np.mean(gflat)
+        bflat_mean_centered = bflat - np.mean(bflat)
+        gNCC_numerator = np.sum(gflat_mean_centered * bflat_mean_centered)
+        gNCC_denominator = np.sqrt(np.sum(gflat_mean_centered**2)) * np.sqrt(np.sum(bflat_mean_centered**2))
         gNCC_score_curr =gNCC_numerator / gNCC_denominator if gNCC_denominator != 0 else 0
 
         #condition
@@ -88,6 +74,15 @@ for dx in disp:
             best_disp_g=(dx,dy)
             gNCC_score_prev=gNCC_score_curr
 
+        # ############SSD Scoring################
+        # norm_gcopy=(gcopy-np.mean(gcopy))/(np.std(gcopy))
+        # norm_b=(b_g-np.mean(b_g))/(np.std(b_g))
+        # gSSD_score_curr=np.mean(sum((norm_gcopy-norm_b)**2))
+
+        # #condition
+        # if gSSD_score_curr < gSSD_score_prev:
+        #     best_disp_g=(dx,dy)
+        #     gSDD_score_prev=gSSD_score_curr
 
 #####RED SHIFT######
 for dx in disp:
@@ -98,24 +93,6 @@ for dx in disp:
         red_shifted = cv2.warpAffine(r, translation_matrix, (r.shape[1], r.shape[0]))
 
         # #####ROI selection########
-        # if dx>0:
-        #     rcopy = red_shifted[:, dx:]
-        #     b_r = b[:, dx:]
-        # elif dx<0:
-        #     rcopy=red_shifted[:,:dx]
-        #     b_r = b[:, :dx]
-        # else:
-        #     pass
-
-        # if dy>0:
-        #     rcopy = rcopy[dy:, :]
-        #     b_r = b_r[dy:, :]
-        # elif dy<0:
-        #     rcopy=rcopy[:dy, :]
-        #     b_r = b_r[:dy, :]
-        # else:
-        #     pass
-
         if dx > 0 and dy > 0:
             rcopy = red_shifted[dy:, dx:]
             b_r = b[dy:, dx:]
@@ -135,14 +112,26 @@ for dx in disp:
         ##############NCC Scoring############
         rflat = rcopy.flatten().astype(np.float32)
         bflat = b_r.flatten().astype(np.float32)
-        rNCC_numerator = np.sum((rflat - np.mean(rflat)) * (bflat - np.mean(bflat)))
-        rNCC_denominator = np.sqrt(np.sum((rflat - np.mean(rflat))**2) * np.sum((bflat - np.mean(bflat))**2))
+        rflat_mean_centered = rflat - np.mean(rflat)
+        bflat_mean_centered = bflat - np.mean(bflat)
+        rNCC_numerator = np.sum(rflat_mean_centered * rflat_mean_centered)
+        rNCC_denominator = np.sqrt(np.sum(rflat_mean_centered**2)) * np.sqrt(np.sum(rflat_mean_centered**2))
         rNCC_score_curr =rNCC_numerator / rNCC_denominator if rNCC_denominator != 0 else 0
 
         #condition
         if rNCC_score_curr > rNCC_score_prev:
             best_disp_r=(dx,dy)
             rNCC_score_prev=rNCC_score_curr
+
+        ############SSD Scoring################
+        # norm_rcopy=(rcopy-np.mean(rcopy))/(np.std(rcopy))
+        # norm_b=(b_r-np.mean(b_r))/(np.std(b_r))
+        # rSSD_score_curr=np.mean(sum((norm_rcopy-norm_b)**2))
+
+        # #condition
+        # if rSSD_score_curr < rSSD_score_prev:
+        #     best_disp_r=(dx,dy)
+        #     rSDD_score_prev=rSSD_score_curr
 
 #########Crop in direction of largest displacement###########
 #crop along Width
