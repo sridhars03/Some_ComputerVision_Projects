@@ -73,9 +73,10 @@ def colorize_img(img, metric='SSD', disp_size=15):
     best_disp_r = align_simple(b, r, metric, disp_size)
 
     #use the disp to align G,R finally
-    #so this shifts the pixels with corresponding vectors first along columns, then rows
-    shift_gr_g=np.roll(np.roll(g, best_disp_g[0], axis=1), best_disp_g[1], axis=0)
-    shift_gr_r=np.roll(np.roll(r, best_disp_r[0], axis=1), best_disp_r[1], axis=0)
+    translation_matrix_g = np.float32([[1, 0, best_disp_g[0]], [0, 1, best_disp_g[1]]])
+    shift_gr_g = cv2.warpAffine(g, translation_matrix_g, (g.shape[1], g.shape[0]))
+    translation_matrix_r = np.float32([[1, 0, best_disp_r[0]], [0, 1, best_disp_r[1]]])
+    shift_gr_r = cv2.warpAffine(r, translation_matrix_r, (r.shape[1], r.shape[0]))
 
     #merging to get color pic
     final_img=cv2.merge([b,shift_gr_g,shift_gr_r])
