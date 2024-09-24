@@ -81,8 +81,9 @@ def colorize_img(img, metric='SSD', disp_size=15):
     #merging to get color pic
     final_img=cv2.merge([b,shift_gr_g,shift_gr_r])
     
-    save_name="G://CS 543-Computer Vision//Some_ComputerVision_Projects//Results//final_img.jpg"
-    cv2.imwrite(save_name, final_img)
+    #SAVE
+    # save_name="your path"
+    # cv2.imwrite(save_name, final_img)
 
     return final_img,best_disp_g,best_disp_r
 
@@ -92,7 +93,7 @@ def viz(img):
     cv2.destroyAllWindows()
 
 def main():
-    img=cv2.imread("G://CS 543-Computer Vision//Assignment 1//data-basic alignment//01112v.jpg",cv2.IMREAD_GRAYSCALE)
+    img=cv2.imread("your path",cv2.IMREAD_GRAYSCALE)
     metric='NCC'
     disp_size=15    #u can change it for different imgs
     final_image,disp_g,disp_r=colorize_img(img, metric=metric, disp_size=disp_size)
