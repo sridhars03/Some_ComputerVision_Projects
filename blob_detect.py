@@ -88,7 +88,7 @@ def blob_detect(img,sigmalog):
 
 
 def main(): 
-    filepath='G://CS 543-Computer Vision//mp2//mp2//images/butterfly.jpg'
+    filepath='your img path'
     img=cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
     img=np.round((img-np.min(img))/(np.max(img)-np.min(img)),5)
     sigmalog=2      #starting sigma
