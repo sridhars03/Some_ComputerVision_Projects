@@ -246,7 +246,7 @@ def blob_detect_DoG(img, sigmas, threshold=0.035):
     return np.array(cx), np.array(cy), np.array(radii)
 
 def main():
-    filepath='G://CS 543-Computer Vision//mp2//mp2//images/butterfly.jpg'
+    filepath='your img path'
     img=cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
     img=np.round((img-np.min(img))/(np.max(img)-np.min(img)),5)
     
